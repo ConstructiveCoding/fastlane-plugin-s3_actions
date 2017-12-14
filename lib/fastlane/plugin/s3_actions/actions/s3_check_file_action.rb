@@ -1,12 +1,12 @@
-require 's3'
+require 'aws-sdk-s3'
 
 module Fastlane
   module Actions
     class S3CheckFileAction < Action
       def self.run(params)
-        Actions.verify_gem!('s3')
+        Actions.verify_gem!('aws-sdk-s3')
 
-        service = S3::Service.new(access_key_id: params[:access_key_id],
+        service = Aws::S3::Client.new(access_key_id: params[:access_key_id],
                               secret_access_key: params[:secret_access_key])
 
         bucket_name = params[:bucket]

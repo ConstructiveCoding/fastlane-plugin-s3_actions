@@ -1,14 +1,23 @@
-require 's3'
+require 'aws-sdk-s3'
 
 module Fastlane
   module Actions
     class S3DownloadAction < Action
       def self.run(params)
-        Actions.verify_gem!('s3')
+        Actions.verify_gem!('aws-sdk-s3')
 
-        service = S3::Service.new(access_key_id: params[:access_key_id],
-                              secret_access_key: params[:secret_access_key])
-
+        UI.message "Configuring"
+        if params[:profile]
+          creds = Aws::SharedCredentials.new(profile_name: params[:profile]);
+        else
+          creds = Aws::Credentials.new(params[:access_key_id], params[:secret_access_key])
+        end
+        
+        Aws.config.update({
+          region: params[:region],
+          credentials: creds
+        })
+        
         bucket_name = params[:bucket]
         file_name = params[:file_name]
         output_path = params[:output_path]
@@ -18,19 +27,33 @@ module Fastlane
           Actions.sh("mkdir #{output_directory}", log: $verbose)
         end
 
-        bucket = service.buckets.find(bucket_name)
-        if bucket.nil?
+        bucket_exists = false
+        
+        client = Aws::S3::Client.new()
+        
+        begin
+          resp = client.head_bucket({bucket: bucket_name, use_accelerate_endpoint: false})
+          bucket_exists = true
+        rescue
+        end
+
+        if !bucket_exists
           UI.user_error! "Bucket '#{bucket_name}' not found, please verify bucket and credentials 🚫"
         end
 
+        s3 = Aws::S3::Resource.new()
         begin
-          object = bucket.objects.find(file_name)
+          object = s3.bucket(bucket_name).object(file_name)
         rescue
           UI.user_error! "Object '#{file_name}' not found, please verify file and bucket 🚫"
         end
 
+        unless object.exists?
+          UI.user_error! "Object '#{file_name}' not found, please verify file and bucket 🚫"
+        end
+
         UI.important("Downloading file '#{bucket_name}/#{file_name}' 📥")
-        File.write(output_path, object.content)
+        object.get(response_target: output_path)
       end
 
       def self.description
@@ -43,15 +66,27 @@ module Fastlane
 
       def self.available_options
         [
+          FastlaneCore::ConfigItem.new(key: :profile,
+                                  env_name: "AWS_S3_PROFILE",
+                               description: "The profile to use for S3 interactions",
+                                  optional: true,
+                             default_value: ENV['AWS_PROFILE'],
+                                      type: String),
+          FastlaneCore::ConfigItem.new(key: :region,
+                                  env_name: "AWS_REGION",
+                                description: "AWS region (for S3) ",
+                                  optional: true,
+                              default_value: ENV['AWS_REGION'],
+                                      type: String),
           FastlaneCore::ConfigItem.new(key: :access_key_id,
                                   env_name: "S3_ACTIONS_ACCESS_KEY_ID",
                                description: "AWS Access Key",
-                                  optional: false,
+                                  optional: true,
                                       type: String),
           FastlaneCore::ConfigItem.new(key: :secret_access_key,
                                   env_name: "S3_ACTIONS_SECRET_ACCESS_KEY",
                                description: "AWS Secret Access Key",
-                                  optional: false,
+                                  optional: true,
                                       type: String),
           FastlaneCore::ConfigItem.new(key: :bucket,
                                   env_name: "S3_ACTIONS_BUCKET",
