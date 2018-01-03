@@ -6,7 +6,12 @@ module Fastlane
       def self.run(params)
         Actions.verify_gem!('aws-sdk-s3')
 
-        UI.message "Configuring"
+        FastlaneCore::PrintTable.print_values(
+          config: params,
+          title: 'Summary for AWS S3 Action',
+          mask_keys: [:access_key_id, :secret_access_key]
+        )
+
         if params[:profile]
           creds = Aws::SharedCredentials.new(profile_name: params[:profile]);
         else
@@ -74,20 +79,22 @@ module Fastlane
                                       type: String),
           FastlaneCore::ConfigItem.new(key: :region,
                                   env_name: "AWS_REGION",
-                                description: "AWS region (for S3) ",
+                               description: "AWS region (for S3) ",
                                   optional: true,
-                              default_value: ENV['AWS_REGION'],
+                             default_value: ENV['AWS_REGION'],
                                       type: String),
           FastlaneCore::ConfigItem.new(key: :access_key_id,
                                   env_name: "S3_ACTIONS_ACCESS_KEY_ID",
                                description: "AWS Access Key",
                                   optional: true,
+                             default_value: ENV['AWS_ACCESS_KEY_ID'],
                                       type: String),
           FastlaneCore::ConfigItem.new(key: :secret_access_key,
                                   env_name: "S3_ACTIONS_SECRET_ACCESS_KEY",
                                description: "AWS Secret Access Key",
                                   optional: true,
-                                      type: String),
+                             default_value: ENV['AWS_SECRET_ACCESS_KEY'],
+                              type: String),
           FastlaneCore::ConfigItem.new(key: :bucket,
                                   env_name: "S3_ACTIONS_BUCKET",
                                description: "S3 Bucket",
