@@ -9,13 +9,13 @@ module Fastlane
         FastlaneCore::PrintTable.print_values(
           config: params,
           title: 'Summary for AWS S3 Action',
-          mask_keys: [:access_key_id, :secret_access_key]
+          mask_keys: [:access_key_id, :secret_access_key, :session_token]
         )
-
+        
         if params[:profile]
           creds = Aws::SharedCredentials.new(profile_name: params[:profile]);
         else
-          creds = Aws::Credentials.new(params[:access_key_id], params[:secret_access_key])
+          creds = Aws::Credentials.new(params[:access_key_id], params[:secret_access_key], params[:session_token])
         end
         
         Aws.config.update({
@@ -34,7 +34,7 @@ module Fastlane
 
         bucket_exists = false
         
-        client = Aws::S3::Client.new()
+        client = Aws::S3::Client.new(region: params[:region], credentials: creds)
         
         begin
           resp = client.head_bucket({bucket: bucket_name, use_accelerate_endpoint: false})
@@ -46,19 +46,20 @@ module Fastlane
           UI.user_error! "Bucket '#{bucket_name}' not found, please verify bucket and credentials 🚫"
         end
 
-        s3 = Aws::S3::Resource.new()
+        s3 = Aws::S3::Resource.new(client: client)
+
         begin
           object = s3.bucket(bucket_name).object(file_name)
         rescue
-          UI.user_error! "Object '#{file_name}' not found, please verify file and bucket 🚫"
+          UI.user_error! "Object '#{file_name}' not found (1), please verify file and bucket 🚫"
         end
 
         unless object.exists?
-          UI.user_error! "Object '#{file_name}' not found, please verify file and bucket 🚫"
+          UI.user_error! "Object '#{file_name}' not found (2), please verify file and bucket 🚫"
         end
 
         UI.important("Downloading file '#{bucket_name}/#{file_name}' 📥")
-        object.get(response_target: output_path)
+        object.download_file(output_path)
       end
 
       def self.description
@@ -94,7 +95,13 @@ module Fastlane
                                description: "AWS Secret Access Key",
                                   optional: true,
                              default_value: ENV['AWS_SECRET_ACCESS_KEY'],
-                              type: String),
+                                      type: String),
+          FastlaneCore::ConfigItem.new(key: :session_token,
+                                  env_name: "S3_ACTIONS_SESSION_TOKEN",
+                               description: "AWS Session Token",
+                                  optional: true,
+                             default_value: ENV['AWS_SESSION_TOKEN'],
+                                      type: String),
           FastlaneCore::ConfigItem.new(key: :bucket,
                                   env_name: "S3_ACTIONS_BUCKET",
                                description: "S3 Bucket",
