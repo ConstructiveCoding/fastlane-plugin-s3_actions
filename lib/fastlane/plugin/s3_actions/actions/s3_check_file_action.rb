@@ -6,19 +6,19 @@ module Fastlane
       def self.run(params)
         Actions.verify_gem!('aws-sdk-s3')
 
-        service = Aws::S3::Client.new(access_key_id: params[:access_key_id],
-                              secret_access_key: params[:secret_access_key])
+        FastlaneCore::PrintTable.print_values(
+          config: params,
+          title: 'Summary for AWS S3 Check File Action',
+          mask_keys: [:access_key_id, :secret_access_key]
+        )
+
+        service = Aws::S3::Client.new(access_key_id: params[:access_key_id], secret_access_key: params[:secret_access_key])
 
         bucket_name = params[:bucket]
         file_name = params[:file_name]
 
-        bucket = service.buckets.find(bucket_name)
-        if bucket.nil?
-          UI.user_error! "Bucket '#{bucket_name}' not found, please verify bucket and credentials 🚫"
-        end
-
         begin
-          bucket.objects.find(file_name)
+          service.head_object(bucket: bucket_name, key: file_name)
           true
         rescue
           false

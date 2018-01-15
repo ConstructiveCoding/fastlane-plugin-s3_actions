@@ -6,36 +6,41 @@ module Fastlane
       def self.run(params)
         Actions.verify_gem!('aws-sdk-s3')
 
-        UI.message "Configuring"
+        FastlaneCore::PrintTable.print_values(
+          config: params,
+          title: 'Summary for AWS S3 Upload Action',
+          mask_keys: [:access_key_id, :secret_access_key]
+        )
+
         if params[:profile]
-          creds = Aws::SharedCredentials.new(profile_name: params[:profile]);
+          creds = Aws::SharedCredentials.new(profile_name: params[:profile])
         else
           creds = Aws::Credentials.new(params[:access_key_id], params[:secret_access_key])
         end
-        
+
         Aws.config.update({
           region: params[:region],
           credentials: creds
         })
 
-        client = Aws::S3::Client.new()
+        client = Aws::S3::Client.new
 
         bucket_name = params[:bucket]
         bucket_exists = false
 
         begin
-          resp = client.head_bucket({bucket: bucket_name, use_accelerate_endpoint: false})
+          client.head_bucket({ bucket: bucket_name, use_accelerate_endpoint: false })
           bucket_exists = true
         rescue
         end
 
-        if !bucket_exists
+        unless bucket_exists
           UI.user_error! "Bucket '#{bucket_name}' not found, please verify bucket and credentials 🚫"
         end
 
         file_name = params[:name] || File.basename(params[:content_path])
 
-        s3 = Aws::S3::Resource.new()
+        s3 = Aws::S3::Resource.new(client: client)
         UI.important("Uploading file to '#{bucket_name}/#{file_name}' 📤")
         object = s3.bucket(bucket_name).object(file_name)
         object.upload_file(params[:content_path])

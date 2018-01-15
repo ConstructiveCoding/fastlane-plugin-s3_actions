@@ -1,4 +1,5 @@
 # coding: utf-8
+
 lib = File.expand_path("../lib", __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'fastlane/plugin/s3_actions/version'
@@ -6,10 +7,10 @@ require 'fastlane/plugin/s3_actions/version'
 Gem::Specification.new do |spec|
   spec.name          = 'fastlane-plugin-s3_actions'
   spec.version       = Fastlane::S3Actions::VERSION
-  spec.author        = %q{Fernando Saragoca}
-  spec.email         = %q{fsaragoca@me.com}
+  spec.author        = 'Fernando Saragoca'
+  spec.email         = 'fsaragoca@me.com'
 
-  spec.summary       = %q{Download and upload files to AWS S3}
+  spec.summary       = 'Download and upload files to AWS S3'
   spec.homepage      = "https://github.com/fsaragoca/fastlane-plugin-s3_actions"
   spec.license       = "MIT"
 
