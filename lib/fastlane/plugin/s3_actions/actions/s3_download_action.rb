@@ -8,21 +8,21 @@ module Fastlane
 
         FastlaneCore::PrintTable.print_values(
           config: params,
-          title: 'Summary for AWS S3 Action',
+          title: 'Summary for AWS S3 Download Action',
           mask_keys: [:access_key_id, :secret_access_key, :session_token]
         )
-        
+
         if params[:profile]
-          creds = Aws::SharedCredentials.new(profile_name: params[:profile]);
+          creds = Aws::SharedCredentials.new(profile_name: params[:profile])
         else
           creds = Aws::Credentials.new(params[:access_key_id], params[:secret_access_key], params[:session_token])
         end
-        
+
         Aws.config.update({
           region: params[:region],
           credentials: creds
         })
-        
+
         bucket_name = params[:bucket]
         file_name = params[:file_name]
         output_path = params[:output_path]
@@ -33,16 +33,16 @@ module Fastlane
         end
 
         bucket_exists = false
-        
+
         client = Aws::S3::Client.new(region: params[:region], credentials: creds)
-        
+
         begin
-          resp = client.head_bucket({bucket: bucket_name, use_accelerate_endpoint: false})
+          client.head_bucket({ bucket: bucket_name, use_accelerate_endpoint: false })
           bucket_exists = true
         rescue
         end
 
-        if !bucket_exists
+        unless bucket_exists
           UI.user_error! "Bucket '#{bucket_name}' not found, please verify bucket and credentials 🚫"
         end
 
