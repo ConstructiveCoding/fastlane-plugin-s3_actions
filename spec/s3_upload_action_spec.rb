@@ -7,6 +7,7 @@ describe Fastlane::Actions::S3UploadAction do
 
     aws_access_key = 'zxcvbnmwertyuio'
     aws_secret_access_key = 'asdfghjklwertyui'
+    aws_session_token = 'qwefrgthyujikoaszxcvbn'
 
     bucket_name = 'the_bucket'
     access_control = :private
@@ -14,7 +15,7 @@ describe Fastlane::Actions::S3UploadAction do
     file_name = 'file_name'
 
     it 'uploads a file using a profile' do
-      stubbed_creds = Aws::Credentials.new(aws_access_key, aws_secret_access_key)
+      stubbed_creds = Aws::Credentials.new(aws_access_key, aws_secret_access_key, aws_session_token)
 
       allow(Aws::SharedCredentials).to receive(:new)
         .with(profile_name: aws_profile)
@@ -46,6 +47,7 @@ describe Fastlane::Actions::S3UploadAction do
       creds = Aws.config[:credentials]
       expect(creds.access_key_id).to eq(aws_access_key)
       expect(creds.secret_access_key).to eq(aws_secret_access_key)
+      expect(creds.session_token).to eq(aws_session_token)
     end
 
     it 'uploads a file using credentials' do
@@ -64,6 +66,7 @@ describe Fastlane::Actions::S3UploadAction do
       result = Fastlane::Actions::S3UploadAction.run({
         access_key_id: aws_access_key,
         secret_access_key: aws_secret_access_key,
+        session_token: aws_session_token,
         region: aws_region,
         bucket: bucket_name,
         access_control: access_control,
@@ -76,6 +79,7 @@ describe Fastlane::Actions::S3UploadAction do
       creds = Aws.config[:credentials]
       expect(creds.access_key_id).to eq(aws_access_key)
       expect(creds.secret_access_key).to eq(aws_secret_access_key)
+      expect(creds.session_token).to eq(aws_session_token)
     end
   end
 end

@@ -9,13 +9,13 @@ module Fastlane
         FastlaneCore::PrintTable.print_values(
           config: params,
           title: 'Summary for AWS S3 Upload Action',
-          mask_keys: [:access_key_id, :secret_access_key]
+          mask_keys: [:access_key_id, :secret_access_key,  :session_token]
         )
 
         if params[:profile]
           creds = Aws::SharedCredentials.new(profile_name: params[:profile])
         else
-          creds = Aws::Credentials.new(params[:access_key_id], params[:secret_access_key])
+          creds = Aws::Credentials.new(params[:access_key_id], params[:secret_access_key], params[:session_token])
         end
 
         Aws.config.update({
@@ -71,12 +71,20 @@ module Fastlane
           FastlaneCore::ConfigItem.new(key: :access_key_id,
                                   env_name: "S3_ACTIONS_ACCESS_KEY_ID",
                                description: "AWS Access Key",
+                             default_value: ENV['AWS_ACCESS_KEY_ID'],
                                   optional: true,
                                       type: String),
           FastlaneCore::ConfigItem.new(key: :secret_access_key,
                                   env_name: "S3_ACTIONS_SECRET_ACCESS_KEY",
                                description: "AWS Secret Access Key",
+                             default_value: ENV['AWS_SECRET_ACCESS_KEY'],
                                   optional: true,
+                                      type: String),
+          FastlaneCore::ConfigItem.new(key: :session_token,
+                                  env_name: "S3_ACTIONS_SESSION_TOKEN",
+                               description: "AWS Session Token",
+                                  optional: true,
+                             default_value: ENV['AWS_SESSION_TOKEN'],
                                       type: String),
           FastlaneCore::ConfigItem.new(key: :bucket,
                                   env_name: "S3_ACTIONS_BUCKET",
